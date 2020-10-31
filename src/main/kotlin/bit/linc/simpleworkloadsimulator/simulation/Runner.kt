@@ -10,30 +10,41 @@ class Runner(
 ) {
 
     private val log = LoggerFactory.getLogger(javaClass)
-    private var nodeTime: Float = 0f
 
-    fun run(nodeManager: NodeManager) {
-        var jct = 0f
+    var currentTimeSec: Float = 0f
+
+    fun runUntil(nodeManager: NodeManager, endSec: Float) {
+        var realEndSec = 0f
         for (node in nodeManager.nodes) {
-            nodeTime = 0f
-            while (node.tasks.isNotEmpty()) {
-                runNodeUntilOneTaskDone(node)
-            }
-            if (nodeTime > jct) {
-                jct = nodeTime
+            val nodeEndSec = runNodeUntil(node, currentTimeSec, endSec)
+            if (realEndSec < nodeEndSec) {
+                realEndSec = nodeEndSec
             }
         }
-        log.info("JCT is ${jct}s")
-        metricsLogger.jct(jct)
+        currentTimeSec = realEndSec
     }
 
-    // node.tasks is always not empty
-    private fun runNodeUntilOneTaskDone(node: Node) {
+    fun runUntilFinish(nodeManager: NodeManager) {
+        runUntil(nodeManager, Float.MAX_VALUE)
+    }
+
+    private tailrec fun runNodeUntil(node: Node, currentTimeSec: Float, endSec: Float): Float {
+        if (node.tasks.isEmpty()) {
+            return currentTimeSec
+        }
+
         allocateResourceToTasks(node)
         val task: Task = findFirstEndTask(node.tasks)
-        moveAhead(task, node)
-        metricsLogger.taskCompleteTime(nodeTime)
-        log.info("task ${task.name} finished at ${nodeTime}s")
+        val nextTaskFinishTime = currentTimeSec + task.remainTime
+        if (nextTaskFinishTime <= endSec) {
+            moveForwardUntilTaskDone(task, node)
+            log.info("task ${task.name} finished at ${nextTaskFinishTime}s")
+            return runNodeUntil(node, nextTaskFinishTime, endSec)
+        }
+
+        val timeToRunSec = endSec - currentTimeSec
+        runNodeSeconds(node, timeToRunSec)
+        return endSec
     }
 
     private fun allocateResourceToTasks(node: Node) {
@@ -61,10 +72,15 @@ class Runner(
         return task
     }
 
+    private fun runNodeSeconds(node: Node, timeSec: Float) {
+        for (task in node.tasks) {
+            task.remainLoad -= timeSec * task.allocatedResource
+        }
+    }
+
     // moves timer and removes finished task
-    private fun moveAhead(toFinishTask: Task, node: Node) {
+    private fun moveForwardUntilTaskDone(toFinishTask: Task, node: Node) {
         val remainTime = toFinishTask.remainTime
-        nodeTime += remainTime
         node.tasks.remove(toFinishTask)
         for (task in node.tasks) {
             task.remainLoad -= remainTime * task.allocatedResource

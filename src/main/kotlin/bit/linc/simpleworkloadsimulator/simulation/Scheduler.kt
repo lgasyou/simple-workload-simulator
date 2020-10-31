@@ -8,8 +8,11 @@ interface Scheduler {
     val name: String
         get() = javaClass.simpleName
 
-    fun schedule(task: Task, nodes: List<Node>): Node {
+    fun schedule(task: Task, nodes: List<Node>): Node? {
         val availableNodes = filter(task, nodes)
+        if (availableNodes.isEmpty()) {
+            return null
+        }
         return score(task, availableNodes)
     }
 

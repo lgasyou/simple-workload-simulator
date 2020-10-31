@@ -7,18 +7,18 @@ class ManualScenarioLoader2: ScenarioLoader {
 
     override fun loadWorkload(): List<Task> {
         return listOf(
-            Task("T1", 2, 4, 4),
-            Task("T2", 3, 4, 12),
-            Task("T3", 4, 6, 24),
-            Task("T4", 2, 4, 4),
-            Task("T5", 3, 4, 12),
-            Task("T6", 4, 6, 24),
-            Task("T7", 2, 4, 4),
-            Task("T8", 3, 4, 12),
-            Task("T9", 4, 6, 24),
-            Task("T10", 2, 4, 4),
-            Task("T11", 3, 4, 12),
-            Task("T12", 4, 6, 24),
+            Task("T1", 0f, 2, 4, 4),
+            Task("T2", 0f, 3, 4, 12),
+            Task("T3", 0f, 4, 6, 24),
+            Task("T4", 0f, 2, 4, 4),
+            Task("T5", 0f, 3, 4, 12),
+            Task("T6", 0f, 4, 6, 24),
+            Task("T7", 0f, 2, 4, 4),
+            Task("T8", 0f, 3, 4, 12),
+            Task("T9", 0f, 4, 6, 24),
+            Task("T10", 0f, 2, 4, 4),
+            Task("T11", 0f, 3, 4, 12),
+            Task("T12", 0f, 4, 6, 24),
         )
     }
 

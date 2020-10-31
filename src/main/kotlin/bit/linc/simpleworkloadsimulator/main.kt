@@ -25,7 +25,7 @@ fun initSimulator(): WorkloadSimulator {
 }
 
 fun simulateOnce() {
-    val loader: ScenarioLoader = ManualScenarioLoader2()
+    val loader: ScenarioLoader = RandomScenarioLoader()
     val workload = loader.loadWorkload()
     val nodes = loader.loadNodes()
     log.info("using workload $workload")

@@ -9,6 +9,15 @@ class NodeManager(
 ) {
 
     private val log = LoggerFactory.getLogger(javaClass)
+    val pendingTasks: MutableList<Task> = mutableListOf()
+
+    fun addPendingTask(task: Task) {
+        pendingTasks.add(task)
+    }
+
+    fun removePendingTask(task: Task) {
+        pendingTasks.remove(task)
+    }
 
     fun bind(task: Task, selectedNode: Node) {
         log.info("binding task ${task.name} to node ${selectedNode.name}")

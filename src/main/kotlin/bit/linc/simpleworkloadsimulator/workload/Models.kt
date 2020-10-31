@@ -2,9 +2,10 @@ package bit.linc.simpleworkloadsimulator.workload
 
 data class Task(
     val name: String,
+    val startTimeSec: Float,
     val requests: Int,
     val limits: Int,
-    val initLoad: Int
+    val initLoad: Int,
 ) {
     var allocatedResource: Float = 0f
     var remainLoad: Float = initLoad.toFloat()

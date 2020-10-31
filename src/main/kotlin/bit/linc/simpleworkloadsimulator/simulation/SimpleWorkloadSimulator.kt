@@ -19,24 +19,41 @@ class SimpleWorkloadSimulator: WorkloadSimulator {
 
     private fun simulateOnce(workload: List<Task>, nodes: List<Node>, scheduler: Scheduler) {
         val copiedNodes = nodes.map { it.copy() }
-        val copiedWorkload = workload.map { it.copy() }
+        val sortedWorkload = workload.map { it.copy() }.sortedBy { it.startTimeSec }
 
-        val nodeSimulator = NodeManager(copiedNodes)
-        for (task in copiedWorkload) {
-            val selectedNode = scheduler.schedule(task, nodeSimulator.nodes)
-            log.info("selected node ${selectedNode.name}")
-            nodeSimulator.bind(task, selectedNode)
+        val nodeManager = NodeManager(copiedNodes)
+        runner.currentTimeSec = 0f
+        for (task in sortedWorkload) {
+            if (task.startTimeSec > runner.currentTimeSec) {
+                val nextStartTimeSec = task.startTimeSec
+                log.info("start running from ${runner.currentTimeSec}")
+                for (node in nodeManager.nodes) {
+                    log.info("node ${node.name} now has ${node.tasks.size} tasks ${node.tasks}")
+                }
+                runner.runUntil(nodeManager, nextStartTimeSec)
+            }
+
+            if (!tryScheduleTask(scheduler, nodeManager, task)) {
+                nodeManager.addPendingTask(task)
+            }
         }
-        startRunning(nodeSimulator)
+
+        runner.runUntilFinish(nodeManager)
+        val jct = runner.currentTimeSec
+        metricsLogger.jct(jct)
+        metricsLogger.completeOnce()
+        log.info("pending tasks ${nodeManager.pendingTasks}")
     }
 
-    private fun startRunning(nodeManager: NodeManager) {
-        log.info("start running")
-        for (node in nodeManager.nodes) {
-            log.info("node ${node.name} has ${node.tasks.size} tasks ${node.tasks}")
+    private fun tryScheduleTask(scheduler: Scheduler, nodeManager: NodeManager, task: Task): Boolean {
+        val selectedNode = scheduler.schedule(task, nodeManager.nodes)
+        if (selectedNode != null) {
+            log.info("selected node ${selectedNode.name}")
+            nodeManager.bind(task, selectedNode)
+            return true
         }
-        runner.run(nodeManager)
-        metricsLogger.completeOnce()
+        log.info("no node available for ${task.name} now")
+        return false
     }
 
     override fun simulate(workload: List<Task>, nodes: List<Node>) {
